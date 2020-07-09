@@ -8,6 +8,7 @@ import { mergeSchemas } from '@graphql-tools/merge'
 import { PluginDefinition } from 'apollo-server-core'
 import { buildSchema as buildCardanoDbHasuraSchema, Db } from '@cardano-graphql/api-cardano-db-hasura'
 import { buildSchema as buildGenesisSchema } from '@cardano-graphql/api-genesis'
+import { buildSchema as buildCardanoNodeSchema } from '@cardano-graphql/api-cardano-node'
 import { GraphQLSchema } from 'graphql'
 export * from './config'
 export { apolloServerPlugins }
@@ -26,6 +27,10 @@ async function boot () {
       ...config.genesisFileByron !== undefined ? { byron: require(config.genesisFileByron) } : {},
       ...config.genesisFileShelley !== undefined ? { shelley: require(config.genesisFileShelley) } : {}
     }))
+  }
+
+  if(config.cardanoNodeSocketPath !== undefined) {
+    schemas.push(await buildCardanoNodeSchema(config))
   }
 
   if (config.hasuraUri !== undefined) {
