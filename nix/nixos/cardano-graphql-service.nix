@@ -1,5 +1,3 @@
-# WARNING!!! THIS IS BROKEN! DO NOT USE!
-
 { lib, pkgs, config, ... }:
 let
   cfg = config.services.cardano-graphql;
@@ -92,6 +90,7 @@ in {
   config = let
     # TODO: there has to be a better way to handle boolean env vars in nodejs???
     boolToNodeJSEnv = bool: if bool then "true" else "false";
+    inherit (import sources.cardano-node {}) cardano-cli;
     frontend = (import ../../.).cardano-graphql;
     persistgraphql = (import ../../.).persistgraphql;
     hasura-cli = (import ../../.).hasura-cli;
@@ -112,11 +111,11 @@ in {
       wantedBy = [ "multi-user.target" ];
       requires = [ "graphql-engine.service" ];
       environment = lib.filterAttrs (k: v: v != null) {
+        CARDANO_CLI_CMD = cardano-cli;
         CARDANO_NODE_SOCKET_PATH = cfg.cardanoNodeSocketPath;
         POOL_METADATA_PROXY = cfg.smashUrl;
         GENESIS_FILE_BYRON = cfg.genesisByron;
         GENESIS_FILE_SHELLEY = cfg.genesisShelley;
-
         HASURA_URI = hasuraBaseUri;
         PROMETHEUS_METRICS = boolToNodeJSEnv cfg.enablePrometheus;
         TRACING = boolToNodeJSEnv (cfg.enableTracing || cfg.enablePrometheus);
