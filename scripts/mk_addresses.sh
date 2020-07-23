@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 set -ex
-
+TESTNET_MAGIC=42
 #
 # In order to run the graphql tests you need some addresses set up on the testnet with funds
-# Copy this file into the ./app directory and then run it from inside the graphql docker container. e.g. docker exec -t ./app/mk-addresses.sh
+# Run it from inside the graphql docker container. e.g. docker exec -t ./app/mk-addresses.sh
 # You will then need to add some ada to the payment.addr using https://testnets.cardano.org/en/shelley/tools/faucet/
 #
 
@@ -19,7 +19,7 @@ cardano-cli shelley stake-address key-gen \
 cardano-cli shelley stake-address build \
 --stake-verification-key-file stake.vkey \
 --out-file stake.addr \
---testnet-magic 42
+--testnet-magic $TESTNET_MAGIC
 
 # build the first payment address, this is the address that you will send payments from in the tests, it needs funds to be added
 cardano-cli shelley address key-gen \
@@ -30,7 +30,7 @@ cardano-cli shelley address build \
 --payment-verification-key-file payment.vkey \
 --stake-verification-key-file stake.vkey \
 --out-file payment.addr \
---testnet-magic 42
+--testnet-magic $TESTNET_MAGIC
 
 # build the second payment address, this is the address that you will send payments to in the tests and it needs no funds
 cardano-cli shelley address key-gen \
@@ -41,7 +41,7 @@ cardano-cli shelley address build \
 --payment-verification-key-file payment2.vkey \
 --stake-verification-key-file stake.vkey \
 --out-file payment2.addr \
---testnet-magic 42
+--testnet-magic $TESTNET_MAGIC
 
 # This is the address you need to add funds to using https://testnets.cardano.org/en/shelley/tools/faucet/
 cat payment.addr

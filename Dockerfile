@@ -30,12 +30,11 @@ WORKDIR /application
 RUN yarn --production --offline --frozen-lockfile --non-interactive
 
 FROM debian:buster-slim as cardano_haskell_builder
-ARG CARDANO_NODE_TAG=1.15.1
+ARG CARDANO_CLI_VERSION=1.15.1
+ARG CARDANO_NODE_REPO_TAG=83ba7dba184d3634af78e2879013cf4cc99227d1
 WORKDIR /build
-RUN apt -yq update && apt -yq upgrade
-
-RUN apt install build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsodium-dev libsystemd-dev zlib1g-dev make g++ tmux git jq wget libncursesw5 \
-    -y
+RUN apt-get update && apt-get install -yq \
+  build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsodium-dev libsystemd-dev zlib1g-dev make g++ tmux git jq wget libncursesw5
 RUN wget https://downloads.haskell.org/~cabal/cabal-install-3.2.0.0/cabal-install-3.2.0.0-x86_64-unknown-linux.tar.xz && \
     tar -xf cabal-install-3.2.0.0-x86_64-unknown-linux.tar.xz && \
     rm cabal-install-3.2.0.0-x86_64-unknown-linux.tar.xz cabal.sig && \
@@ -53,19 +52,18 @@ RUN mkdir build
 RUN git clone https://github.com/input-output-hk/cardano-node.git && \
   cd cardano-node && \
   git fetch --all --tags && \
-  git checkout ${CARDANO_NODE_TAG}
+  git checkout ${CARDANO_NODE_REPO_TAG}
 WORKDIR /app/cardano-node
 COPY config/cabal.project.local .
 RUN cabal build cardano-cli && \
-  mv ./dist-newstyle/build/x86_64-linux/ghc-8.6.5/cardano-cli-${CARDANO_NODE_TAG}/x/cardano-cli/build/cardano-cli/cardano-cli /usr/local/bin/
+  mv ./dist-newstyle/build/x86_64-linux/ghc-8.6.5/cardano-cli-${CARDANO_CLI_VERSION}/x/cardano-cli/build/cardano-cli/cardano-cli /usr/local/bin/
+ENTRYPOINT ["cardano-cli"]
 
 FROM frolvlad/alpine-glibc:alpine-3.11_glibc-2.30 as downloader
 RUN apk add curl
 RUN curl --proto '=https' --tlsv1.2 -sSf -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | sh
 RUN hasura --skip-update-check update-cli --version v1.2.1
 
-#FROM frolvlad/alpine-glibc:alpine-3.11_glibc-2.30 as server
-#RUN apt add nodejs
 FROM debian:buster-slim as server
 RUN apt -yq update && apt -yq upgrade
 RUN apt install nodejs -y

@@ -1,25 +1,35 @@
-/* eslint-disable quotes */
-
 import fs from 'fs'
 import util from '@cardano-graphql/util'
-import utilDev from '@cardano-graphql/util-dev'
+import { TestClient } from '@cardano-graphql/util-dev'
 import { cleanTestData, createTransaction, getTransactionFileUpload } from './transactionUtil'
 import FormData from 'form-data'
 import fetch from 'node-fetch'
-import { execSync } from 'child_process'
+import { DocumentNode } from 'graphql'
+import path from 'path'
+import { buildClient } from './util'
+import delay from 'delay'
+
+const fromAddr = fs.readFileSync('../../app/payment.addr').toString().trim()
+const toAddr = fs.readFileSync('../../app/payment2.addr').toString().trim()
+
+function loadQueryNode (name: string): Promise<DocumentNode> {
+  return util.loadQueryNode(path.resolve(__dirname, '..', 'src', 'example_queries'), name)
+}
 
 describe('graphql', () => {
+  let graphQlClient: TestClient
+
+  beforeAll(async () => {
+    graphQlClient = await buildClient()
+  })
+
   it('submits a signed transaction to the network using graphql', async () => {
-    const graphqlClient = await utilDev.createE2EClient()
-    const tip = await graphqlClient.query({
-      query: util.getTip()
+    const nodeTipResult = await graphQlClient.query({
+      query: await loadQueryNode('nodeTip')
     })
-    expect(tip.data.node.hash).toBeDefined()
-    // FIXME: local files
-    const fromAddr = fs.readFileSync('../../app/payment.addr').toString().trim()
-    const toAddr = fs.readFileSync('../../app/payment2.addr').toString().trim()
+    expect(nodeTipResult.data.node.hash).toBeDefined()
     const settings = {
-      timeLimit: 300, // I can't find out how to work this out but it seems if you set it to 30 it's too low
+      timeLimit: 300,
       fromAddr,
       toAddr,
       signingKeyFile: '/app/payment.skey'
@@ -51,7 +61,7 @@ describe('graphql', () => {
     })
     expect(result.status).toEqual(200)
     // wait for some time to allow the tx to succeed
-    execSync(`sleep 10`)
+    await delay(10000)
     // we check that the transaction has been successful by checking that the to address has it
     const fromUTXOs = client.getUTXO(fromAddr).map(data => data.TxHash)
     const toUTXOs = client.getUTXO(toAddr).map(data => data.TxHash)

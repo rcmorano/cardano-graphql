@@ -8,7 +8,7 @@ export async function buildClient () {
     const cardanoCli = process.env.CARDANO_CLI_CMD ? process.env.CARDANO_CLI_CMD : 'cardano-cli'
     const testnet = `--testnet-magic ${process.env.CARDANO_MAGIC || '42'}`
     const settings = { testnet, cardanoCli }
-    const schema = buildSchema(settings)
+    const schema = await buildSchema(settings)
     return utilDev.createIntegrationClient(schema)
   }
 }
