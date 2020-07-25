@@ -30,8 +30,8 @@ WORKDIR /application
 RUN yarn --production --offline --frozen-lockfile --non-interactive
 
 FROM debian:buster-slim as cardano_haskell_builder
-ARG CARDANO_CLI_VERSION=1.15.1
-ARG CARDANO_NODE_REPO_TAG=83ba7dba184d3634af78e2879013cf4cc99227d1
+ARG CARDANO_CLI_VERSION=1.18.0
+ARG CARDANO_NODE_REPO_TAG=8b2e6cfbd2db4c3211562c2c157548c0a0400300
 WORKDIR /build
 RUN apt-get update && apt-get install -yq \
   build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsodium-dev libsystemd-dev zlib1g-dev make g++ tmux git jq wget libncursesw5
